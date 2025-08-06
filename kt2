@@ -1,2 +1,0 @@
-import neurokit2 as kt2
-print（'kt2'）
