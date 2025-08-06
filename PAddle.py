@@ -1,0 +1,32 @@
+from paddleocr import PaddleOCR
+
+path = input('path of image: ')
+language = input('ch or en ? ')
+
+ocr = PaddleOCR(use_angle_cls=True, lang=language, use_gpu=True)
+result = ocr.ocr(path, cls=True)
+
+# Group words by lines (using y-coordinate of bounding box)
+lines = {}
+for line in result:
+    for word_info in line:
+        text = word_info[1][0]
+        # Use the y-coordinate of the top-left corner to group lines
+        y_coord = word_info[0][0][1]  # [0][0] is top-left, [1] is y-coordinate
+        # Group words with similar y-coordinates (tolerance=10 pixels)
+        found_line = False
+        for existing_y in lines.keys():
+            if abs(existing_y - y_coord) < 10:
+                lines[existing_y].append((word_info[0][0][0], text))  # (x-coord, text)
+                found_line = True
+                break
+        if not found_line:
+            lines[y_coord] = [(word_info[0][0][0], text)]
+
+# Sort lines by y-coordinate and words by x-coordinate
+sorted_lines = sorted(lines.items(), key=lambda x: x[0])
+for y, words in sorted_lines:
+    # Sort words in the same line by x-coordinate
+    sorted_words = sorted(words, key=lambda x: x[0])
+    line_text = ' '.join([word[1] for word in sorted_words])
+    print(line_text)
